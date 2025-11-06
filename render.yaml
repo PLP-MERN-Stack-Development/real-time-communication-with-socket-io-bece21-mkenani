@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: socketio-chat-server
+    env: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  - type: web
+    name: socketio-chat-client
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    envVars:
+      - key: VITE_SERVER_URL
+        value: https://socketio-chat-server.onrender.com
