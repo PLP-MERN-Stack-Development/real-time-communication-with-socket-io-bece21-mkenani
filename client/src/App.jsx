@@ -5,11 +5,13 @@ import {
   MessageSquare, Search, Smile, Paperclip, CheckCheck 
 } from 'lucide-react';
 
-const socket = io('http://localhost:5000');
+const API_URL = import.meta.env.VITE_APP_SOCKET_URL;
+
+const socket = io(API_URL);
 
 // Emoji picker component
 const EmojiPicker = ({ onEmojiSelect, onClose }) => {
-  const emojis = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '👏'];
+  const emojis = ['👍'];
 
   return (
     <div className="absolute bottom-12 left-0 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl shadow-2xl p-3 z-50">
@@ -52,6 +54,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showMobileRooms, setShowMobileRooms] = useState(false);
   
   // Theme state
   const [darkMode, setDarkMode] = useState(() => {
@@ -240,6 +243,7 @@ function App() {
   const switchRoom = (roomName) => {
     if (roomName !== currentRoom) {
       socket.emit('switch_room', roomName);
+      setShowMobileRooms(false);
     }
   };
 
@@ -422,17 +426,15 @@ function App() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <Wifi className={`w-4 h-4 ${isConnected ? 'text-green-500' : 'text-red-500'}`} />
-                <span className={`text-sm font-medium transition-colors duration-300 ${
-                  darkMode ? 'text-gray-300' : 'text-gray-600'
-                }`}>
+                <span className="hidden sm:inline text-sm font-medium transition-colors duration-300">
                   {isConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
-              <div>
+              <div className="hidden md:block">
                 <h1 className={`text-xl font-bold transition-colors duration-300 ${
                   darkMode ? 'text-white' : 'text-gray-800'
                 }`}>
-                  #{currentRoom}
+                  {currentRoom} Group
                 </h1>
                 <p className={`text-sm transition-colors duration-300 ${
                   darkMode ? 'text-gray-400' : 'text-gray-600'
@@ -542,7 +544,7 @@ function App() {
                     }`}
                   >
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">#{room.name}</span>
+                      <span className="font-medium">{room.name}</span>
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         currentRoom === room.name
                           ? 'bg-white bg-opacity-20'
@@ -610,7 +612,7 @@ function App() {
                 <h2 className={`text-lg font-bold transition-colors duration-300 ${
                   darkMode ? 'text-white' : 'text-gray-800'
                 }`}>
-                  #{currentRoom} {searchQuery && `- Search: "${searchQuery}"`}
+                  {currentRoom} {searchQuery && `- Search: "${searchQuery}"`}
                 </h2>
                 <span className={`text-sm transition-colors duration-300 ${
                   darkMode ? 'text-gray-400' : 'text-gray-600'
@@ -723,14 +725,16 @@ function App() {
             <form onSubmit={sendMessage} className={`p-4 border-t transition-colors duration-300 ${
               darkMode ? 'border-slate-600' : 'border-gray-200'
             }`}>
-              <div className="flex space-x-2">
+              {/* Desktop Layout */}
+              <div className="hidden md:flex space-x-2 items-center">
                 {/* File upload button */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className={`p-3 rounded-xl transition-colors duration-300 ${
+                  className={`p-3 rounded-xl transition-colors duration-300 flex items-center justify-center ${
                     darkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-gray-100 hover:bg-gray-200'
                   }`}
+                  style={{ width: '48px', height: '48px' }}
                 >
                   <Paperclip className="w-4 h-4" />
                 </button>
@@ -747,9 +751,10 @@ function App() {
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className={`p-3 rounded-xl transition-colors duration-300 ${
+                    className={`p-3 rounded-xl transition-colors duration-300 flex items-center justify-center ${
                       darkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-gray-100 hover:bg-gray-200'
                     }`}
+                    style={{ width: '48px', height: '48px' }}
                   >
                     <Smile className="w-4 h-4" />
                   </button>
@@ -772,7 +777,7 @@ function App() {
                     setMessage(e.target.value);
                     handleTyping();
                   }}
-                  placeholder={`Message #${currentRoom}`}
+                  placeholder={`Message in ${currentRoom}`}
                   className={`flex-1 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
                     darkMode 
                       ? 'bg-slate-700 border-slate-600 text-white' 
@@ -784,18 +789,197 @@ function App() {
                   type="submit"
                   disabled={!message.trim()}
                   className="px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-2"
+                  style={{ height: '48px' }}
                 >
                   <Send className="w-4 h-4" />
-                  <span className="hidden sm:inline">Send</span>
+                  <span>Send</span>
                 </button>
+              </div>
+
+              {/* Mobile Layout */}
+              <div className="md:hidden flex space-x-2 items-center">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={message}
+                    onChange={(e) => {
+                      setMessage(e.target.value);
+                      handleTyping();
+                    }}
+                    placeholder={`Message in ${currentRoom}`}
+                    className={`w-full px-4 py-3 pr-28 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-slate-700 border-slate-600 text-white' 
+                        : 'bg-gray-50 border-gray-200 text-gray-900'
+                    }`}
+                  />
+                  
+                  {/* Mobile action buttons inside input */}
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                    {/* File upload button */}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`p-2 rounded-lg transition-colors duration-300 flex items-center justify-center ${
+                        darkMode ? 'bg-slate-600 hover:bg-slate-500' : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                      style={{ width: '36px', height: '36px' }}
+                    >
+                      <Paperclip className="w-4 h-4" />
+                    </button>
+                    
+                    {/* Emoji picker button */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className={`p-2 rounded-lg transition-colors duration-300 flex items-center justify-center ${
+                          darkMode ? 'bg-slate-600 hover:bg-slate-500' : 'bg-gray-200 hover:bg-gray-300'
+                        }`}
+                        style={{ width: '36px', height: '36px' }}
+                      >
+                        <Smile className="w-4 h-4" />
+                      </button>
+                      
+                      {showEmojiPicker && (
+                        <EmojiPicker
+                          onEmojiSelect={(emoji) => {
+                            setMessage(prev => prev + emoji);
+                            setShowEmojiPicker(false);
+                          }}
+                          onClose={() => setShowEmojiPicker(false)}
+                        />
+                      )}
+                    </div>
+
+                    {/* Send button */}
+                    <button
+                      type="submit"
+                      disabled={!message.trim()}
+                      className={`p-2 rounded-lg transition-all flex items-center justify-center ${
+                        message.trim()
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                          : darkMode
+                          ? 'bg-slate-600 text-gray-400'
+                          : 'bg-gray-200 text-gray-400'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      style={{ width: '36px', height: '36px' }}
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
               </div>
             </form>
           </div>
         </div>
 
+        {/* Mobile Rooms Panel */}
+        {showMobileRooms && (
+          <div className={`lg:hidden fixed inset-0 z-50 transition-opacity duration-300`}>
+            <div 
+              className="absolute inset-0 bg-black bg-opacity-30"
+              onClick={() => setShowMobileRooms(false)}
+            ></div>
+            <div className={`absolute right-4 top-20 bottom-20 w-72 rounded-2xl p-6 shadow-xl transition-colors duration-300 ${
+              darkMode ? 'bg-slate-800' : 'bg-white'
+            }`}>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className={`text-lg font-semibold transition-colors duration-300 ${
+                  darkMode ? 'text-white' : 'text-gray-800'
+                }`}>
+                  Chat Rooms
+                </h2>
+                <button
+                  onClick={() => setShowMobileRooms(false)}
+                  className={`p-2 rounded-lg transition-colors duration-300 ${
+                    darkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  <span className="text-lg">×</span>
+                </button>
+              </div>
+              
+              <div className="space-y-2 mb-6 max-h-40 overflow-y-auto">
+                {rooms.map((room) => (
+                  <button
+                    key={room.name}
+                    onClick={() => switchRoom(room.name)}
+                    className={`w-full text-left p-3 rounded-xl transition-all duration-300 ${
+                      currentRoom === room.name
+                        ? darkMode
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-blue-500 text-white'
+                        : darkMode
+                        ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{room.name}</span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        currentRoom === room.name
+                          ? 'bg-white bg-opacity-20'
+                          : darkMode
+                          ? 'bg-slate-600'
+                          : 'bg-gray-300'
+                      }`}>
+                        {room.userCount}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Mobile Online Users */}
+              <div>
+                <h2 className={`text-lg font-semibold mb-4 transition-colors duration-300 ${
+                  darkMode ? 'text-white' : 'text-gray-800'
+                }`}>
+                  Online Users ({users.length})
+                </h2>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {users.map((user, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center space-x-3 p-3 rounded-xl transition-colors duration-300 ${
+                        darkMode ? 'bg-slate-700' : 'bg-gray-100'
+                      }`}
+                    >
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className={`font-medium transition-colors duration-300 ${
+                        darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        {user}
+                      </span>
+                      {user === username && (
+                        <span className={`text-xs px-2 py-1 rounded-full transition-colors duration-300 ${
+                          darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          You
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Mobile Rooms Button */}
-        <div className="lg:hidden fixed bottom-6 right-6">
-          <button className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all">
+        <div className="lg:hidden fixed bottom-20 right-6 z-40">
+          <button 
+            onClick={() => setShowMobileRooms(!showMobileRooms)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all"
+          >
             <MessageSquare className="w-6 h-6" />
           </button>
         </div>
