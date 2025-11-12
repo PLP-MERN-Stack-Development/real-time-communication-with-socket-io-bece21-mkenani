@@ -11,7 +11,6 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// Create uploads directory if it doesn't exist
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
@@ -25,7 +24,7 @@ const io = new Server(server, {
 });
 
 // Initialize SQLite Database
-const db = new sqlite3.Database(':memory:'); // Use ':memory:' for development or 'chat.db' for production
+const db = new sqlite3.Database(':memory:'); 
 
 // Create tables
 db.serialize(() => {
@@ -118,7 +117,7 @@ const getMessageHistory = (room, limit = 50) => {
         if (err) {
           reject(err);
         } else {
-          resolve(rows.reverse()); // Return in chronological order
+          resolve(rows.reverse()); 
         }
       }
     );
