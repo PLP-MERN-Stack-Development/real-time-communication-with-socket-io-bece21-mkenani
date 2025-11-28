@@ -5,7 +5,8 @@ const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
-
+const dotenv = require('dotenv');
+dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -18,14 +19,13 @@ if (!fs.existsSync('uploads')) {
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin:process.env.ALLOWED_ORIGIN,
     methods: ["GET", "POST"]
   }
 });
 
 // Initialize SQLite Database
 const db = new sqlite3.Database(':memory:'); 
-
 // Create tables
 db.serialize(() => {
   // Users table
