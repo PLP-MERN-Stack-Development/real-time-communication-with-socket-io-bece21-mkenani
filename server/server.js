@@ -6,6 +6,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
+
 dotenv.config();
 const app = express();
 app.use(cors());
@@ -440,8 +441,7 @@ app.get('/api/messages/search', (req, res) => {
     }
   );
 });
-
-const PORT = 5000;
+const PORT=process.env.PORT;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Available rooms:', rooms);
